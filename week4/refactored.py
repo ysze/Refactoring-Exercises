@@ -1,42 +1,50 @@
 import random
 from datetime import datetime
 
+SUITS = ["d", "c", "h", "s"]
+RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
-class cards():
-    def __init__(self, deck=7):  # makes the deck
-        klist = ['d'] * 13 + ['c'] * 13 + ['h'] * 13 + ['s'] * 13
-        number = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'] * 4
-        keys = list(zip(klist, number))  # keys are made up of the suit and the value
-        values = [deck] * 52  # dictionary values are the number of cards
-        ddict = dict(zip(keys, values))
-        self.ddict = ddict
 
-    def deal(self):  # hands out card
-        random.seed(datetime.now())  # generates random seed based on time
-        keylist = list(self.ddict.keys())
-        rip = random.sample(keylist, 1)  # picks random dictionary value
-        cards.remove(self, rip)  # removes card from dicitonary
-        return rip
+class Card:
+    def __init__(self, suit, rank):
+        self.suit = suit
+        self.rank = rank
 
-    def checkhand(self, hand):  # checks value of hand
-        total = 0
-        acecheck = False
-        for i in hand:  # adds up value of the cards
-            if i[0][1] == 'J' or i[0][1] == 'Q' or i[0][1] == 'K':
-                total += 10
-            elif i[0][1] == 'A':  # automatically adds 11 if ace
-                total += 11
-                acecheck = True
-            else:
-                total += int(i[0][1])
-        if acecheck == True and total > 21 or total == 17:  # checks if, when the ace value is 11, it is over 21 it will subtract 10
-            total -= 10
-        return total
+    def value(self):
+        if self.is_ace:
+            return 11
+        elif self.rank in "J Q K".split():
+            return 10
+        return int(self.rank)
 
-    def checkdeck(self):  # checks how many cards are left
-        return (sum(self.ddict.values()))
+    @property
+    def is_ace(self):
+        return self.rank == "A"
 
-    def remove(self, victim):  # removes cards from dictionary at the end of round
-        self.ddict[victim[0]] -= 1
-        if self.ddict[victim[0]] == 0:  # checks if there is anymore cards of that suit and value
-            del self.ddict[victim[0]]
+
+class Deck:
+    def __init__(self):
+        self.cards = [Card(suit, rank) for suit in SUITS for rank in RANKS]
+        self.shuffle()
+
+    def shuffle(self):
+        random.shuffle(self.cards)
+
+    def deal_card(self):
+        return self.cards.pop(0)
+
+
+class Hand:
+    def __init__(self):
+        self.hand = []
+
+    def add_card(self, card):
+        self.hand.append(card)
+
+    def check_hand(self):
+        value = sum([card.value() for card in self.hand])
+        num_aces = sum([card.is_ace for card in self.hand])
+        while value > 21 and num_aces > 0:
+            value -= 10
+            num_aces -= 1
+        return value
